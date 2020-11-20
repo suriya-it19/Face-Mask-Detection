@@ -1,5 +1,9 @@
 # Face Mask Detection and Alert System
 
+## Dataset :
+	We collected the dataset from various domains and added in our project, link to download the dataset :
+	https://drive.google.com/drive/folders/1qU6aJx0c9imoggQ-5d4yPC7qG5PXC1vX?usp=sharing
+		
 ## Steps :
     1.Train the Model using train_mask_detector.py 
          -> arguments for training 
