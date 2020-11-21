@@ -16,8 +16,9 @@
 
 
 ## Alternate Ways :
-    1.  Incase you need to use the pretrained models use the trained one in the, Trained Folder
-	      and start using in the cam file
+	1.  Incase you need to use the pretrained models; The models we trained wit h150 epochs containg 5,000 Images,
+	(link for the download -> https://drive.google.com/drive/folders/1bwKw0WMF1xUVBOkVJEN46KH1q86JSejj?usp=sharing)
+	and start using in the cam file
       
 ## Face Recognition :
     Create Data of your Organization Workers or School Students or College Students, to train
