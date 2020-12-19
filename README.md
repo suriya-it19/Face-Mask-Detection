@@ -24,7 +24,8 @@
     Create Data of your Organization Workers or School Students or College Students, to train
   
 ## Alert system :
-    Soon...
+    Create an account at twilio and start using the code app.py with your API credentials.
+    Note: Credentials in the won't work, replace with yours.
   
   
    
