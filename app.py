@@ -69,7 +69,7 @@ def message_alert(name):
     # Your Account Sid and Auth Token from twilio.com/console
     # and set the environment variables. See http://twil.io/secure
     account_sid = 'AC0622bdd42a99e44fe4ecd051df9dd0c6' 
-    auth_token = 'edd8269a36f8d59628b1e72065340070' 
+    auth_token = '0d205db9464d0cc627c32eab573546a2' 
     client = Client(account_sid, auth_token)
     for names in data['Name'].values:
         if names == name:
@@ -98,7 +98,7 @@ face_model = load_model('F:/Projects/Mask-detection/face-recognition/normal_main
 print("[INFO] starting video stream...")
 #vs = VideoStream(src=0).start()
 vs = cv2.VideoCapture(0)
-url='http://192.168.1.3:8080/shot.jpg'
+url='http://192.168.1.2:8080/shot.jpg'
 time.sleep(2.0)
 
 def gen_frames(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
