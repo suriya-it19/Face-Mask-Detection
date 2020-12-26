@@ -1,3 +1,7 @@
+#Give it a try and
+#edit yourself with your data
+
+
 import os
 import time
 import urllib.request
@@ -14,11 +18,21 @@ from twilio.rest import Client
 from flask import Flask, render_template, Response
 from camera import Camera
 
+#create a twilio account to get the credentials
+token = 'token from twilio'
+number = 'unique no from twilio'
+excel = 'database directory'
+folderTemplate = 'templates folder to'
+urlPath = 'mobile or CCTV ip'
+baseHtml = 'base.html'
+indexHtml = 'index.html'
 thresold = 0.5
-Sadam,Santhosh,Deepak=0,0,0
-data = pd.read_excel('students.xlsx')
+Sadam, Santhosh, Deepak, UnKnown = 0, 0, 0, 0
 
-app = Flask(__name__, template_folder='templates')
+
+data = pd.read_excel(excel)
+
+app = Flask(__name__)
 
 def detect_and_predict_mask(frame, faceNet, maskNet,face_model):
 
@@ -64,12 +78,11 @@ def detect_and_predict_mask(frame, faceNet, maskNet,face_model):
 
 
 def message_alert(name):
-    data = pd.read_excel('students.xlsx')
     count = 0
     # Your Account Sid and Auth Token from twilio.com/console
     # and set the environment variables. See http://twil.io/secure
     account_sid = 'AC0622bdd42a99e44fe4ecd051df9dd0c6' 
-    auth_token = '0d205db9464d0cc627c32eab573546a2' 
+    auth_token = token
     client = Client(account_sid, auth_token)
     for names in data['Name'].values:
         if names == name:
@@ -78,7 +91,7 @@ def message_alert(name):
                                 body="{} You have been warned for violating the rules.Please wear Mask for your as well as others Safety".format(str(data.iloc[count,0])),
                                 media_url=['https://image.shutterstock.com/image-vector/safety-first-symbol-260nw-102323386.jpg'],
                                 
-                                from_='+918870966785',
+                                from_= number,
                                 to='+91{}'.format(data.iloc[count,1])
                             )
 
@@ -87,21 +100,20 @@ def message_alert(name):
 
 
 print("[INFO] loading face detector model...")
-prototxtPath = os.path.sep.join(['face-mask-detector/face_detector', "deploy.prototxt"])
-weightsPath = os.path.sep.join(['face-mask-detector/face_detector',"res10_300x300_ssd_iter_140000.caffemodel"])
-faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+faceNet = cv2.dnn.readNet('dir of deploy.prototxt',
+                          'dir of caffemodel')
 
 print("[INFO] loading face mask detector model...")
-maskNet = load_model('Model\Final_model_50.h5')
-face_model = load_model('F:/Projects/Mask-detection/face-recognition/normal_main_model_150.h5')
+maskNet = load_model('mask model')
+face_model = load_model('face recognition model')
 
 print("[INFO] starting video stream...")
-#vs = VideoStream(src=0).start()
 vs = cv2.VideoCapture(0)
-url='http://192.168.1.2:8080/shot.jpg'
+url = urlPath
 time.sleep(2.0)
 
-def gen_frames(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
+def gen_frames(Sadam,Santhosh,Deepak, UnKnown):  # generate frame by frame from camera
+    i = 0
     while True:
         # Capture frame-by-frame
         success, frame = vs.read()  # read the camera frame
@@ -122,45 +134,50 @@ def gen_frames(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
             label = "{}: {:.2f}%".format(label1, max(mask, withoutMask) * 100)
             if label1 == 'No Mask':
                 for i in preds1:
-                    face_pred = np.argmax(i)        
+                    face_pred = np.argmax(i)
                     if (i[face_pred] > 0.5):
                         if (face_pred == 0):
                             face_label = 'Deepak'
                             Deepak = Deepak + 1
-                            Sadam,Santhosh=0,0
+                            Sadam, Santhosh = 0, 0
                             if Deepak > 20:
-                                print('Warning Deepak')
-                            #    message_alert('Deepak')
-                                Deepak = 0
+                                print('Warning Deepak!')
+                                message_alert('Deepak')
                         if (face_pred == 1):
-                            face_label  = 'Sadam'
+                            face_label = 'Sadam'
                             Sadam += 1
-                            Santhosh,Deepak=0,0
+                            Santhosh, Deepak = 0, 0
                             if Sadam > 20:
-                                print('Warning Sadam')
-                            #    message_alert('Sadam')
-                                Sadam = 0
+                                print('Warning Sadam!')
+                            message_alert('Sadam')
                         if (face_pred == 2):
                             face_label = 'Santhosh'
                             Santhosh += 1
-                            Sadam,Deepak=0,0
+                            Sadam, Deepak = 0, 0
                             if Santhosh > 20:
-                                print('Warning Santhosh')
-                            #    message_alert('Santhosh')
-                                Santhosh = 0
-                frame_label = 'Sadam: {0}, Santhosh: {1}, Deepak: {2}'.format(Sadam,Santhosh,Deepak)
+                                print('Warning Santhosh!')
+                                message_alert('Santhosh')
+                    else:
+                        face_label = 'Unknown'
+                        UnKnown += 1
+                        Santhosh, Deepak, Sadam = 0, 0, 0
+                        if UnKnown > 20:
+                            print('Warning Unknown Person!')
+
+                frame_label = 'Sadam: {0}, Santhosh: {1}, Deepak: {2}, Unknown: {3}'.format(Sadam, Santhosh, Deepak,
+                                                                                            UnKnown)
 
                 cv2.putText(frame, label, (startX, startY - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                 cv2.putText(frame, face_label, (startX, startY - 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
                 cv2.putText(frame, frame_label, (startX, startY - 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
                 cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                #Sadam,Santhosh,Deepak=0,0,0
+                # Sadam,Santhosh,Deepak=0,0,0
 
             else:
-                Sadam,Santhosh,Deepak=0,0,0
+                Sadam, Santhosh, Deepak, UnKnown = 0, 0, 0, 0
                 cv2.putText(frame, label, (startX, startY - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                 cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
@@ -172,7 +189,7 @@ def gen_frames(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
             b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
         
-def gen_frames1(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
+def gen_frames1(Sadam,Santhosh,Deepak, UnKnown):  # generate frame by frame from camera
     while True:        
         imgPath = urllib.request.urlopen(url)
         imgNp = np.array(bytearray(imgPath.read()),dtype=np.uint8)
@@ -196,45 +213,50 @@ def gen_frames1(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
             label = "{}: {:.2f}%".format(label1, max(mask, withoutMask) * 100)
             if label1 == 'No Mask':
                 for i in preds1:
-                    face_pred = np.argmax(i)        
+                    face_pred = np.argmax(i)
                     if (i[face_pred] > 0.5):
                         if (face_pred == 0):
                             face_label = 'Deepak'
                             Deepak = Deepak + 1
-                            Sadam,Santhosh=0,0
+                            Sadam, Santhosh = 0, 0
                             if Deepak > 20:
-                                print('Warning Deepak')
-                            #    message_alert('Deepak')
-                                Deepak = 0
+                                print('Warning Deepak!')
+                                message_alert('Deepak')
                         if (face_pred == 1):
-                            face_label  = 'Sadam'
+                            face_label = 'Sadam'
                             Sadam += 1
-                            Santhosh,Deepak=0,0
+                            Santhosh, Deepak = 0, 0
                             if Sadam > 20:
-                                print('Warning Sadam')
-                            #    message_alert('Sadam')
-                                Sadam = 0
+                                print('Warning Sadam!')
+                            message_alert('Sadam')
                         if (face_pred == 2):
                             face_label = 'Santhosh'
                             Santhosh += 1
-                            Sadam,Deepak=0,0
+                            Sadam, Deepak = 0, 0
                             if Santhosh > 20:
-                                print('Warning Santhosh')
-                            #    message_alert('Santhosh')
-                                Santhosh = 0
-                frame_label = 'Sadam: {0}, Santhosh: {1}, Deepak: {2}'.format(Sadam,Santhosh,Deepak)
+                                print('Warning Santhosh!')
+                                message_alert('Santhosh')
+                    else:
+                        face_label = 'Unknown'
+                        UnKnown += 1
+                        Santhosh, Deepak, Sadam = 0, 0, 0
+                        if UnKnown > 20:
+                            print('Warning Unknown Person!')
+
+                frame_label = 'Sadam: {0}, Santhosh: {1}, Deepak: {2}, Unknown: {3}'.format(Sadam, Santhosh, Deepak,
+                                                                                            UnKnown)
 
                 cv2.putText(img2, label, (startX, startY - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                 cv2.putText(img2, face_label, (startX, startY - 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
                 cv2.putText(img2, frame_label, (startX, startY - 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, face_color, 2)
                 cv2.rectangle(img2, (startX, startY), (endX, endY), color, 2)
-                #Sadam,Santhosh,Deepak=0,0,0
+                # Sadam,Santhosh,Deepak=0,0,0
 
             else:
-                Sadam,Santhosh,Deepak=0,0,0
+                Sadam, Santhosh, Deepak, UnKnown = 0, 0, 0, 0
                 cv2.putText(img2, label, (startX, startY - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                 cv2.rectangle(img2, (startX, startY), (endX, endY), color, 2)
@@ -249,22 +271,22 @@ def gen_frames1(Sadam,Santhosh,Deepak):  # generate frame by frame from camera
 @app.route('/webcam')
 def cam_video_feed():
     #Video streaming route. Put this in the src attribute of an img tag
-    return Response(gen_frames(Sadam,Santhosh,Deepak), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen_frames(Sadam,Santhosh,Deepak,UnKnown), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/mobile')
 def video_feed():
     #Video streaming route. Put this in the src attribute of an img tag
-    return Response(gen_frames1(Sadam,Santhosh,Deepak), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen_frames1(Sadam,Santhosh,Deepak,UnKnown), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/data', methods=("POST", "GET"))
 def html_table():
 
-    return render_template('base.html',  tables=[data.to_html(classes='data')], titles=data.columns.values)
+    return render_template(baseHtml,  tables=[data.to_html(classes='data')], titles=data.columns.values)
 
 @app.route('/')
 def index():
     """Video streaming home page."""
-    return render_template('index.html')
+    return render_template(indexHtml)
 
 
 if __name__ == '__main__':
